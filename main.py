@@ -68,12 +68,16 @@ class Player:
         self.color = color
         self.board = Board()
 
+class AIPlayer(Player):
+    def choose_column(self, dice_roll):
+        valid_columns = [i for i in range(3) if None in self.board.grid[i]]
+        return str(random.choice(valid_columns) + 1)
 
 class Knucklebone:
 
     def __init__(self):
         self.current_turn_index = 0
-        self.players = [Player("cyan"), Player("red")]
+        self.players = []
 
     def get_current_player(self):
         return self.players[self.current_turn_index]
@@ -81,14 +85,19 @@ class Knucklebone:
     def main_menu(self):
         while True:
             console.clear()
-            console.print(Panel("[1] Play\n[2] Quit", title="Knucklebone"))
+            console.print(Panel("[1] Play vs Human\n[2] Play vs AI\n[3] Quit", title="Knucklebone"))
 
-            choice = Prompt.ask("Please select an option", choices=["1", "2"])
+            choice = Prompt.ask("Please select an option", choices=["1", "2", "3"])
 
             if choice == "1":
                 console.clear()
+                self.players = [Player("cyan"), Player("red")]
                 self.play_game()
-            if choice == "2":
+            elif choice == "2":
+                console.clear()
+                self.players = [Player("cyan"), AIPlayer("red")]
+                self.play_game()
+            elif choice == "3":
                 break
 
     def random_number(self):
@@ -148,13 +157,19 @@ class Knucklebone:
 
             self.show_board()
 
-            while True:
-                choice = Prompt.ask("Please select an option", choices=["1", "2", "3"])
-                valid_play = current_player.board.update_column(int(choice), dice_roll)
-                if valid_play:
-                    break
-                else:
-                    console.print("[red]Invalid play[/red]")
+            if isinstance(current_player, AIPlayer):
+                choice = current_player.choose_column(dice_roll)
+                current_player.board.update_column(int(choice), dice_roll)
+                console.print(f"AI chooses column {choice}")
+            else:
+                while True:
+                    choice = Prompt.ask("Please select an option", choices=["1", "2", "3"])
+                    valid_play = current_player.board.update_column(int(choice), dice_roll)
+                    if valid_play:
+                        break
+                    else:
+                        console.print("[red]Invalid play[/red]")
+
             self.clear_opponent_column(choice, dice_roll)
             if self.is_game_over():
                 console.clear()
