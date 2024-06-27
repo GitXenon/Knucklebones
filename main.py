@@ -1,5 +1,6 @@
 import random
 import time
+from faker import Faker
 
 from rich.console import Console
 from rich.panel import Panel
@@ -68,11 +69,16 @@ class Board:
 
 
 class Player:
-    def __init__(self, color: str):
+    def __init__(self, color: str, name: str):
         self.color = color
+        self.name = name
         self.board = Board()
 
 class AIPlayer(Player):
+    def __init__(self, color: str):
+        fake = Faker('de_DE')
+        super().__init__(color, fake.first_name())
+
     def choose_column(self, dice_roll):
         valid_columns = [i for i in range(3) if None in self.board.grid[i]]
         return str(random.choice(valid_columns) + 1)
@@ -95,11 +101,14 @@ class Knucklebone:
 
             if choice == "1":
                 console.clear()
-                self.players = [Player("cyan"), Player("red")]
+                player1_name = Prompt.ask("Enter name for Player 1")
+                player2_name = Prompt.ask("Enter name for Player 2")
+                self.players = [Player("cyan", player1_name), Player("red", player2_name)]
                 self.play_game()
             elif choice == "2":
                 console.clear()
-                self.players = [Player("cyan"), AIPlayer("red")]
+                player_name = Prompt.ask("Enter your name")
+                self.players = [Player("cyan", player_name), AIPlayer("red")]
                 self.play_game()
             elif choice == "3":
                 break
@@ -119,9 +128,9 @@ class Knucklebone:
         table.add_column("Player", no_wrap=True)
         table.add_column("Score", style="bold magenta", no_wrap=True)
         for player in self.players:
-            table.add_row(player.color, str(player.board.score()), style=player.color)
+            table.add_row(player.name, str(player.board.score()), style=player.color)
 
-        trophy = Text(f"🏆 {winner.color} Wins!", justify="center", style="bold green")
+        trophy = Text(f"🏆 {winner.name} Wins!", justify="center", style="bold green")
         console.print(Panel(table, title="Game Results", expand=False))
         console.print(Panel(trophy, expand=False))
 
@@ -156,13 +165,13 @@ class Knucklebone:
             current_player = self.get_current_player()
             dice_roll = self.random_number()
             console.print(
-                f"[{current_player.color}]It's {current_player.color} turn! Your score is {current_player.board.score()}.\n[/{current_player.color}]You rolled a [bold]{dice_roll}[/bold]."
+                f"[{current_player.color}]It's {current_player.name}'s turn! Your score is {current_player.board.score()}.\n[/{current_player.color}]You rolled a [bold]{dice_roll}[/bold]."
             )
 
             self.show_board()
 
             if isinstance(current_player, AIPlayer):
-                console.print("AI is thinking...", style="italic")
+                console.print(f":thinking_face: [italic]{current_player.name} is thinking...[/italic]")
                 time.sleep(1)
                 choice = current_player.choose_column(dice_roll)
             else:
