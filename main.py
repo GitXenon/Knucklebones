@@ -1,4 +1,5 @@
 import random
+import time
 
 from rich.console import Console
 from rich.panel import Panel
@@ -23,6 +24,9 @@ class Board:
                 self.grid[int(column_nb) - 1][i] = dice_roll
                 return True
         return False
+
+    def is_valid_move(self, column_nb):
+        return any(cell is None for cell in self.grid[int(column_nb) - 1])
 
     def column_score(self):
         column_score = [0, 0, 0]
@@ -158,22 +162,22 @@ class Knucklebone:
             self.show_board()
 
             if isinstance(current_player, AIPlayer):
+                console.print("AI is thinking...", style="italic")
+                time.sleep(1)
                 choice = current_player.choose_column(dice_roll)
-                current_player.board.update_column(int(choice), dice_roll)
-                console.print(f"AI chooses column {choice}")
             else:
                 while True:
                     choice = Prompt.ask("Please select an option", choices=["1", "2", "3"])
-                    valid_play = current_player.board.update_column(int(choice), dice_roll)
-                    if valid_play:
+                    if current_player.board.is_valid_move(int(choice)):
                         break
                     else:
                         console.print("[red]Invalid play[/red]")
 
+            current_player.board.update_column(int(choice), dice_roll)
             self.clear_opponent_column(choice, dice_roll)
+
+
             if self.is_game_over():
-                console.clear()
-                self.show_board()
                 self.display_end_game_screen()
                 input("Press enter to return to the main menu...")
                 self.reset_game()
