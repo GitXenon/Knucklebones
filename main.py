@@ -62,7 +62,6 @@ class Board:
         else:
             self.print_column_score(color=color)
             console.print(table)
-            
 
     def print_column_score(self, color="white"):
         console.print(self.column_score(), style=color)
@@ -74,14 +73,66 @@ class Player:
         self.name = name
         self.board = Board()
 
-class AIPlayer(Player):
-    def __init__(self, color: str):
-        fake = Faker('de_DE')
-        super().__init__(color, fake.first_name())
 
-    def choose_column(self, dice_roll):
+class AIPlayer(Player):
+    def __init__(self, color: str, difficulty: str):
+        fake = Faker("de_DE")
+        super().__init__(color, fake.first_name())
+        self.difficulty = difficulty
+
+    def choose_column(self, dice_roll, opponent_board):
         valid_columns = [i for i in range(3) if None in self.board.grid[i]]
-        return str(random.choice(valid_columns) + 1)
+
+        if self.difficulty == "easy":
+            return str(random.choice(valid_columns) + 1)
+
+        elif self.difficulty == "medium":
+            best_score = -1
+            best_column = None
+            for col in valid_columns:
+                score = self._calculate_score_for_move(col, dice_roll)
+                if score > best_score:
+                    best_score = score
+                    best_column = col
+            return str(best_column + 1)
+
+        elif self.difficulty == "hard":
+            best_score = -1
+            best_column = None
+            for col in valid_columns:
+                score = self._calculate_score_for_move(col, dice_roll)
+                opponent_score = self._calculate_opponent_loss(
+                    col, dice_roll, opponent_board
+                )
+                total_score = score + opponent_score
+                if total_score > best_score:
+                    best_score = total_score
+                    best_column = col
+            return str(best_column + 1)
+
+    def _calculate_score_for_move(self, column, dice_roll):
+        temp_board = [row[:] for row in self.board.grid]
+        for i in range(3):
+            if temp_board[column][i] is None:
+                temp_board[column][i] = dice_roll
+                break
+        return self._calculate_column_score(temp_board[column])
+
+    def _calculate_column_score(self, column):
+        value_counts = {}
+        for value in column:
+            if value is not None:
+                value_counts[value] = value_counts.get(value, 0) + 1
+        return sum(int(value) * count * count for value, count in value_counts.items())
+
+    def _calculate_opponent_loss(self, column, dice_roll, opponent_board):
+        temp_board = [row[:] for row in opponent_board.grid]
+        original_score = self._calculate_column_score(temp_board[column])
+        temp_board[column] = [val for val in temp_board[column] if val != dice_roll]
+        temp_board[column] += [None] * (3 - len(temp_board[column]))
+        new_score = self._calculate_column_score(temp_board[column])
+        return original_score - new_score
+
 
 class Knucklebone:
 
@@ -95,7 +146,11 @@ class Knucklebone:
     def main_menu(self):
         while True:
             console.clear()
-            console.print(Panel("[1] Play vs Human\n[2] Play vs AI\n[3] Quit", title="Knucklebone"))
+            console.print(
+                Panel(
+                    "[1] Play vs Human\n[2] Play vs AI\n[3] Quit", title="Knucklebone"
+                )
+            )
 
             choice = Prompt.ask("Please select an option", choices=["1", "2", "3"])
 
@@ -103,12 +158,29 @@ class Knucklebone:
                 console.clear()
                 player1_name = Prompt.ask("Enter name for Player 1")
                 player2_name = Prompt.ask("Enter name for Player 2")
-                self.players = [Player("cyan", player1_name), Player("red", player2_name)]
+                self.players = [
+                    Player("cyan", player1_name),
+                    Player("red", player2_name),
+                ]
                 self.play_game()
             elif choice == "2":
                 console.clear()
                 player_name = Prompt.ask("Enter your name")
-                self.players = [Player("cyan", player_name), AIPlayer("red")]
+                console.print("\nChoose AI difficulty:")
+                console.print("[1] Easy")
+                console.print("[2] Medium (default)")
+                console.print("[3] Hard")
+                difficulty_choice = Prompt.ask("Enter your choice", default="2", choices=["1", "2", "3"])
+                
+                difficulty_map = {"1": "easy", "2": "medium", "3": "hard"}
+                ai_difficulty = difficulty_map[difficulty_choice]
+                
+                self.players = [
+                    Player("cyan", player_name),
+                    AIPlayer("red", ai_difficulty),
+                ]
+                console.print(f"\nYou've chosen to play against a {ai_difficulty} AI.")
+                time.sleep(1.5)  # Give the player a moment to see their choice
                 self.play_game()
             elif choice == "3":
                 break
@@ -171,12 +243,17 @@ class Knucklebone:
             self.show_board()
 
             if isinstance(current_player, AIPlayer):
-                console.print(f":thinking_face: [italic]{current_player.name} is thinking...[/italic]")
+                console.print(
+                    f":thinking_face: [italic]{current_player.name} is thinking...[/italic]"
+                )
                 time.sleep(1)
-                choice = current_player.choose_column(dice_roll)
+                opponent_board = self.players[1 - self.current_turn_index].board
+                choice = current_player.choose_column(dice_roll, opponent_board)
             else:
                 while True:
-                    choice = Prompt.ask("Please select an option", choices=["1", "2", "3"])
+                    choice = Prompt.ask(
+                        "Please select an option", choices=["1", "2", "3"]
+                    )
                     if current_player.board.is_valid_move(int(choice)):
                         break
                     else:
@@ -184,7 +261,6 @@ class Knucklebone:
 
             current_player.board.update_column(int(choice), dice_roll)
             self.clear_opponent_column(choice, dice_roll)
-
 
             if self.is_game_over():
                 self.display_end_game_screen()
