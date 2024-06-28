@@ -34,13 +34,10 @@ class Board:
         for i in range(3):
             value_counts = {}
             for value in self.grid[i]:
-                if value in value_counts:
-                    value_counts[value] += 1
-                else:
-                    value_counts[value] = 1
-            for value, count in value_counts.items():
                 if value is not None:
-                    column_score[i] += int(value) * count * count
+                    value_counts[value] = value_counts.get(value, 0) + 1
+            for value, count in value_counts.items():
+                column_score[i] += int(value) * count * count
         return column_score
 
     def score(self):
@@ -170,11 +167,13 @@ class Knucklebone:
                 console.print("[1] Easy")
                 console.print("[2] Medium (default)")
                 console.print("[3] Hard")
-                difficulty_choice = Prompt.ask("Enter your choice", default="2", choices=["1", "2", "3"])
-                
+                difficulty_choice = Prompt.ask(
+                    "Enter your choice", default="2", choices=["1", "2", "3"]
+                )
+
                 difficulty_map = {"1": "easy", "2": "medium", "3": "hard"}
                 ai_difficulty = difficulty_map[difficulty_choice]
-                
+
                 self.players = [
                     Player("cyan", player_name),
                     AIPlayer("red", ai_difficulty),
@@ -217,12 +216,13 @@ class Knucklebone:
     def clear_opponent_column(self, column: str, dice_roll: str):
         opponent_board = self.players[1 - self.current_turn_index].board
         column_idx = int(column) - 1
-        for i in range(3 - 1, -1, -1):
-            if opponent_board.grid[column_idx][i] == dice_roll:
-                opponent_board.grid[column_idx][i:] = opponent_board.grid[column_idx][
-                    i + 1 :
-                ]
-                opponent_board.grid[column_idx].append(None)
+        new_column = [
+            value
+            for value in opponent_board.grid[column_idx]
+            if value != int(dice_roll)
+        ]
+        new_column += [None] * (3 - len(new_column))
+        opponent_board.grid[column_idx] = new_column
 
     def show_board(self):
         for i in range(1, -1, -1):
