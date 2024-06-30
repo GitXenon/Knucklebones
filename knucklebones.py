@@ -44,24 +44,24 @@ class Board:
         return sum(self.column_score())
 
     def print(self, reverse=False, color="white"):
-        table = Table(show_header=False, box=box.ROUNDED, style=color)
+        table = Table(box=box.ROUNDED, style=color)
+        column_scores = self.column_score()
 
-        for _ in range(3):
-            table.add_column()
+        for score in column_scores:
+            table.add_column(
+                str(score),
+                str(score),
+                header_style=f"bold {color}",
+                footer_style=f"bold {color}"
+            )
 
         range_values = range(2, -1, -1) if reverse else range(3)
         for i in range_values:
-            table.add_row(self.grid[0][i], self.grid[1][i], self.grid[2][i])
+            table.add_row(*[self.grid[j][i] for j in range(3)])
 
-        if reverse:
-            console.print(table)
-            self.print_column_score(color=color)
-        else:
-            self.print_column_score(color=color)
-            console.print(table)
-
-    def print_column_score(self, color="white"):
-        console.print(self.column_score(), style=color)
+        table.show_footer = reverse
+        table.show_header = not reverse
+        console.print(table)
 
 
 class Player:
