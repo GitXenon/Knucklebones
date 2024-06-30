@@ -19,15 +19,15 @@ class Board:
     def reset(self):
         self.grid = [[None for _ in range(3)] for _ in range(3)]
 
-    def update_column(self, column_nb, dice_roll):
+    def update_column(self, column_nb: str, dice_roll: str):
         for i in range(3):
             if self.grid[int(column_nb) - 1][i] == None:
                 self.grid[int(column_nb) - 1][i] = dice_roll
                 return True
         return False
 
-    def is_valid_move(self, column_nb):
-        return any(cell is None for cell in self.grid[int(column_nb) - 1])
+    def is_valid_move(self, column_nb: int):
+        return any(cell is None for cell in self.grid[column_nb - 1])
 
     def column_score(self):
         column_score = [0, 0, 0]
@@ -219,8 +219,9 @@ class Knucklebone:
         new_column = [
             value
             for value in opponent_board.grid[column_idx]
-            if value != int(dice_roll)
+            if value != dice_roll
         ]
+        print(new_column)
         new_column += [None] * (3 - len(new_column))
         opponent_board.grid[column_idx] = new_column
 
