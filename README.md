@@ -18,3 +18,25 @@ Recreation in Python of the game
   |6 | 6 | 24 | 54 |
 - When a player places a die, all dice of the same value in the corresponding column of the opponent's board gets destroyed. Players can use this mechanic to destroy their opponent's high-scoring combos.
 - The game ends when either player completely fills up their 3x3 board. The player with the higher score wins.
+
+## Showcase
+
+```
+It's GitXenon's turn! Your score is 19.
+You rolled a 2.
+╭───┬───┬───╮
+│ 1 │   │   │
+│ 3 │   │   │
+│ 5 │ 2 │   │
+├───┼───┼───┤
+│ 9 │ 2 │ 0 │
+╰───┴───┴───╯
+╭───┬────┬───╮
+│ 0 │ 11 │ 8 │
+├───┼────┼───┤
+│   │ 5  │ 2 │
+│   │ 6  │ 2 │
+│   │    │   │
+╰───┴────┴───╯
+Please select an option [1/2/3]:
+```
