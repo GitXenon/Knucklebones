@@ -4,6 +4,14 @@ Recreation in Python of the game
 
 ## How to play
 
+To start the game
+
+```
+python knucklebones.py
+```
+
+### Rules
+
 - The game consists of two 3x3 boards, each belonging to their respective player.
 - The players take turns. On a player's turn, they roll a single 6-sided die, and must place it in a column on their board. A filled column does not accept any more dice.
 - Each player has a score, which is the sum of all the dice values on their board. The score awarded by each column is also displayed.
